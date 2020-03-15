@@ -14,7 +14,7 @@ namespace Logic
         // Connected IDs
         private static readonly HashSet<string> ConnectionIds = new HashSet<string>();
         
-        private static readonly CircularBuffer<(string, object, object)> Buffer = new CircularBuffer<(string, object, object)>(10);
+        private static readonly CircularBuffer<(string, object, object)> Buffer = new CircularBuffer<(string, object, object)>(20);
 
         public override async Task OnConnectedAsync()
         {
