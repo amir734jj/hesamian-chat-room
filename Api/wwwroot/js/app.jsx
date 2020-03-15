@@ -90,8 +90,8 @@ class Chat extends React.Component {
             this.setState(({ logs }) => logs.unshift(`Announced: ${name}`));
         });
 
-        this.connection.on("Inbox", ({text}) => {
-            this.setState(({ logs }) => logs.unshift(`Received message: ${text}`));
+        this.connection.on("Inbox", ({text, name}) => {
+            this.setState(({ logs }) => logs.unshift(`From: ${name} - Received message ${text.trim()}`));
         });
 
         this.connection.start();
@@ -108,7 +108,7 @@ class Chat extends React.Component {
     };
     
     sendMessage = async message => {
-        await this.connection.invoke("Echo", message);
+        await this.connection.invoke("Echo", Object.assign({}, message, this.state));
     };
 
     render() {
