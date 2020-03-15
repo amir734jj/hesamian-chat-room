@@ -73,7 +73,7 @@ class Chat extends React.Component {
 
                         <div className='clearfix' style={{ margin: '2rem'}}>
                             <pre>
-                                {this.state.messages.map((x, i) => x[0] + x[1]).join("\n")}
+                                {this.state.messages.map((x, i) => `Event: ${x[0]}: #${x[1]}`).join("\n")}
                             </pre>
                         </div>
                     </div>
