@@ -177,9 +177,10 @@ class Chat extends React.Component {
             <div>
                 {this.state.initialized ? (
                     <div className={'row'}>
-                        <span className="label label-primary pull-right"> {this.state.name}</span>
+                        <span className="label label-primary pull-right"
+                              style={{marginRight: '2rem'}}> {this.state.name}</span>
 
-                        <Messenger itemClass={'col-sm-12'} submitHandler={this.sendMessage} style={{ marginRight: '1rem' }}/>
+                        <Messenger itemClass={'col-sm-12'} submitHandler={this.sendMessage}/>
 
                         <div className={'col-sm-12'}>
                             {this.state.messages.map(({name, time, text, voice}, i) => (
