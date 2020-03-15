@@ -167,7 +167,7 @@ class Chat extends React.Component {
         const source = URL.createObjectURL(blob);
 
         return (
-            <div key={`audio-${index}`}>
+            <div key={`audio-key-${index}`}>
                 <audio id="audio" controls autoPlay={!index}>
                     <source id="source" src={source} type="audio/ogg"/>
                 </audio>
