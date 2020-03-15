@@ -179,9 +179,9 @@ class Chat extends React.Component {
                     <div className={'row'}>
                         <span className="label label-primary pull-right"> {this.state.name}</span>
 
-                        <Messenger itemClass={'col-md-12'} submitHandler={this.sendMessage}/>
+                        <Messenger itemClass={'col-sm-12'} submitHandler={this.sendMessage} style={{ marginRight: '1rem' }}/>
 
-                        <div className={'col-md-12'}>
+                        <div className={'col-sm-12'}>
                             {this.state.messages.map(({name, time, text, voice}, i) => (
                                 <div className="panel-group" key={this.state.messages.length - i - 1}>
                                     <div className="panel panel-default">
@@ -196,7 +196,7 @@ class Chat extends React.Component {
                             ))}
                         </div>
 
-                        <div className='clearfix scol-md-12'>
+                        <div className='clearfix scol-sm-12'>
                             <pre>
                                 {this.state.logs.join("\n")}
                             </pre>
