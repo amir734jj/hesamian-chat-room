@@ -162,13 +162,13 @@ class Chat extends React.Component {
         await this.connection.invoke("Echo", Object.assign({time: new Date()}, message, this.state));
     };
 
-    formatAudioResponse = (voice, flag) => {
+    formatAudioResponse = (voice, index) => {
         let blob = blobUtil.base64StringToBlob(voice);
         const source = URL.createObjectURL(blob);
 
         return (
             <div>
-                <audio id="audio" controls autoPlay={!flag}>
+                <audio id="audio" controls autoPlay={!index} key={`audio-${index}`}>
                     <source id="source" src={source} type="audio/ogg"/>
                 </audio>
             </div>
