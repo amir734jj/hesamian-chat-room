@@ -1,16 +1,19 @@
-class Info extends React.Component {
+class BasicComponent extends React.Component {
+    
+    handleSubmit = submitHandler => event => {
+        event.preventDefault();
+
+        submitHandler(this.state);
+    };
+}
+
+class Info extends BasicComponent {
     constructor() {
         super();
         this.state = {
             name: ""
         };
     }
-
-    handleSubmit = submitHandler => event => {
-        event.preventDefault();
-
-        submitHandler(this.state);
-    };
 
     render() {
         const { submitHandler } = this.props;
@@ -26,9 +29,39 @@ class Info extends React.Component {
                         onChange={event => this.setState({ name: event.target.value })}
                     />
                 </div>
-                <button type="submit" className="btn btn-default">
-                    Submit
-                </button>
+                <div className="form-group">
+                    <button type="submit" className="btn btn-default">
+                        Submit
+                    </button>
+                </div>
+            </form>
+        );
+    }
+}
+
+class Messenger extends BasicComponent {
+    
+    constructor() {
+        super();
+        this.state = { text: '' }
+    }
+
+
+    render() {
+        const { submitHandler } = this.props;
+
+        return (
+            <form onSubmit={this.handleSubmit(submitHandler)}>
+                <div className="form-group">
+                    <label htmlFor="message">Write the message text:</label>
+                    <textarea className="form-control" id="message" placeholder="Enter message" required onChange={event => this.setState({ text: event.target.value })} />
+                </div>
+
+                <div className="form-group">
+                    <button type="submit" className="btn btn-default">
+                        Send
+                    </button>
+                </div>
             </form>
         );
     }
@@ -39,7 +72,7 @@ class Chat extends React.Component {
         super();
         this.state = {
             name: "",
-            messages: [],
+            logs: [],
             initialized: false
         };
     }
@@ -50,7 +83,15 @@ class Chat extends React.Component {
             .build();
 
         this.connection.on("Log", (event, count) => {
-            this.setState(({ messages }) => messages.unshift([event, count]));
+            this.setState(({ logs }) => logs.unshift(`Event: ${event}: #${count}`));
+        });
+
+        this.connection.on("Announce", (_, name) => {
+            this.setState(({ logs }) => logs.unshift(`Announced: ${name}`));
+        });
+
+        this.connection.on("Inbox", ({text}) => {
+            this.setState(({ logs }) => logs.unshift(`Received message: ${text}`));
         });
 
         this.connection.start();
@@ -60,8 +101,14 @@ class Chat extends React.Component {
         this.connection.stop();
     }
 
-    setInfoHandler = ({ name }) => {
-        this.setState({ initialized: true, name });
+    setInfoHandler = async ({ name }) => {
+        await this.setState({ initialized: true, name });
+
+        await this.connection.invoke("Announce", this.state);
+    };
+    
+    sendMessage = async message => {
+        await this.connection.invoke("Echo", message);
     };
 
     render() {
@@ -73,9 +120,11 @@ class Chat extends React.Component {
 
                         <div className='clearfix' style={{ margin: '2rem'}}>
                             <pre>
-                                {this.state.messages.map((x, i) => `Event: ${x[0]}: #${x[1]}`).join("\n")}
+                                {this.state.logs.join("\n")}
                             </pre>
                         </div>
+                        
+                        <Messenger submitHandler={this.sendMessage} />
                     </div>
                 ) : (
                     <Info submitHandler={this.setInfoHandler} />

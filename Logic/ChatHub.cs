@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Models;
+using static Models.Constants.Actions;
 
 namespace Logic
 {
@@ -15,19 +16,24 @@ namespace Logic
         {
             ConnectedIds.Add(Context.ConnectionId);
 
-            await Clients.All.SendAsync("Log", "joined", ConnectedIds.Count);
+            await Clients.All.SendAsync(LogAction, "joined", ConnectedIds.Count);
         }
 
         public override async Task OnDisconnectedAsync(Exception ex)
         {
             ConnectedIds.Remove(Context.ConnectionId);
             
-            await Clients.All.SendAsync("Log", "left", ConnectedIds.Count);
+            await Clients.All.SendAsync(LogAction, "left", ConnectedIds.Count);
         }
 
         public async Task Echo(Payload message)
         {
             await Clients.All.SendAsync("Inbox", message);
+        }
+        
+        public async Task Announce(Profile profile)
+        {
+            await Clients.All.SendAsync(AnnounceAction, "Profile", profile.Name);
         }
     }
 }
