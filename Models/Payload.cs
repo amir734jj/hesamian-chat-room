@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace Models
 {
@@ -10,6 +11,6 @@ namespace Models
         
         public string Text { get; set; }
         
-        public byte[] Voice { get; set; }
+        public string Voice { get; set; }
     }
 }

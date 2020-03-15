@@ -4,13 +4,15 @@ class BasicComponent extends React.Component {
         event.preventDefault();
 
         submitHandler(this.state);
+
+        this.setState(this.defaultState);
     };
 }
 
 class Info extends BasicComponent {
     constructor() {
         super();
-        this.state = {
+        this.state = this.defaultState = {
             name: ""
         };
     }
@@ -30,7 +32,7 @@ class Info extends BasicComponent {
                     />
                 </div>
                 <div className="form-group">
-                    <button type="submit" className="btn btn-default">
+                    <button type="submit" className="btn btn-success">
                         Submit
                     </button>
                 </div>
@@ -43,9 +45,42 @@ class Messenger extends BasicComponent {
 
     constructor() {
         super();
-        this.state = {text: ''}
+        this.state = this.defaultState = {
+            text: '',
+            recording: false,
+            stream: null,
+            recorder: null,
+            voice: null
+        };
     }
 
+    recordToggle = callback => async () => {
+        if (this.state.recording) {
+            this.state.recorder.stop();
+            this.state.stream.getAudioTracks()[0].stop();
+            this.setState({stream: null, recorder: null, recording: false});
+        } else {
+            let stream = await navigator.mediaDevices.getUserMedia({audio: true});
+            let recorder = new MediaRecorder(stream);
+
+            await this.setState({stream, recorder, recording: true});
+
+            recorder.ondataavailable = async e => {
+                let blob = e.data;
+                await this.setState({recording: false});
+
+                blobUtil.blobToBase64String(blob).then((base64String) => {
+                    // success
+                    callback(base64String);
+                }).catch((err) => {
+                    // error
+                    console.error(err);
+                });
+            };
+
+            recorder.start();
+        }
+    };
 
     render() {
         const {submitHandler, itemClass} = this.props;
@@ -55,13 +90,20 @@ class Messenger extends BasicComponent {
                 <div className="form-group">
                     <label htmlFor="message">Write the message text:</label>
                     <textarea className="form-control" id="message" placeholder="Enter message" required
+                              value={this.state.text}
                               onChange={event => this.setState({text: event.target.value})}/>
                 </div>
 
                 <div className="form-group">
-                    <button type="submit" className="btn btn-success">
-                        Echo
-                    </button>
+                    <div className={'btn-group'}>
+                        <button type="submit" className="btn btn-primary" key={'send'}>
+                            Echo
+                        </button>
+                        <button type='button' className={'btn btn-default'} key={'record'}
+                                onClick={this.recordToggle(voice => this.setState({voice}))}>
+                            {!this.state.recording ? 'Record' : 'Stop'}
+                        </button>
+                    </div>
                 </div>
             </form>
         );
@@ -116,6 +158,24 @@ class Chat extends React.Component {
     sendMessage = async message => {
         await this.connection.invoke("Echo", Object.assign({time: new Date()}, message, this.state));
     };
+    
+    formatAudioResponse = voice => {
+        if (voice) {
+            let blob = blobUtil.base64StringToBlob(voice);
+            const source = URL.createObjectURL(blob);
+
+            return (
+                <div>
+                    <hr />
+                    <audio id="audio" controls autoPlay={true}>
+                        <source id="source" src={source} type="audio/ogg"/>
+                    </audio>
+                </div>
+            )
+        } else {
+            return null;
+        }
+    };
 
     render() {
         return (
@@ -123,21 +183,25 @@ class Chat extends React.Component {
                 {this.state.initialized ? (
                     <div className={'row'}>
                         <span className="label label-primary pull-right"> {this.state.name}</span>
-                        
+
                         <Messenger itemClass={'col-md-12'} submitHandler={this.sendMessage}/>
-                        
+
                         <div className={'col-md-12'}>
-                            {this.state.messages.map(({name, time, text}) => (
-                                <div className="panel-group">
+                            {this.state.messages.map(({name, time, text, voice}, i) => (
+                                <div className="panel-group" key={i}>
                                     <div className="panel panel-default">
-                                        <div className="panel-heading"> {name} @ {this.formatTime(time)}</div>
-                                        <div className="panel-body">{text}</div>
+                                        <div className="panel-heading"
+                                             key={'header'}> {name} @ {this.formatTime(time)}</div>
+                                        <div className="panel-body" key={'body'}>
+                                            {text}
+                                            {this.formatAudioResponse(voice)}
+                                        </div>
                                     </div>
                                 </div>
                             ))}
                         </div>
 
-                        <div className='clearfix col-md-12'>
+                        <div className='clearfix scol-md-12'>
                             <pre>
                                 {this.state.logs.join("\n")}
                             </pre>
