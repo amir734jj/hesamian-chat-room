@@ -168,7 +168,6 @@ class Chat extends React.Component {
 
         return (
             <div>
-                <hr/>
                 <audio id="audio" controls autoPlay={!flag}>
                     <source id="source" src={source} type="audio/ogg"/>
                 </audio>
@@ -193,6 +192,7 @@ class Chat extends React.Component {
                                              key={'header'}> {name} @ {this.formatTime(time)}</div>
                                         <div className="panel-body" key={'body'}>
                                             {text}
+                                            {text && voice ? (<hr/>) : null}
                                             {voice ? this.formatAudioResponse(voice, i) : null}
                                         </div>
                                     </div>
