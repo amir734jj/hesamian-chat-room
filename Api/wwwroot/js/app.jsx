@@ -89,17 +89,20 @@ class Messenger extends BasicComponent {
             <form onSubmit={this.handleSubmit(submitHandler)} className={itemClass}>
                 <div className="form-group">
                     <label htmlFor="message">Write the message text:</label>
-                    <textarea className="form-control" id="message" placeholder="Enter message" required
+                    <textarea className="form-control" id="message" placeholder="Enter message"
                               value={this.state.text}
                               onChange={event => this.setState({text: event.target.value})}/>
                 </div>
 
                 <div className="form-group">
                     <div className={'btn-group'}>
-                        <button type="submit" className="btn btn-primary" key={'send'}>
-                            Echo
+                        <button type="submit" className="btn btn-primary" key={'send'} disabled={this.state.recording}>
+                            Send
                         </button>
-                        <button type='button' className={'btn btn-default'} key={'record'}
+                        <button type='button' className={classNames('btn', {
+                            'btn-default': !this.state.recording,
+                            'btn-danger': this.state.recording
+                        })} key={'record'}
                                 onClick={this.recordToggle(voice => this.setState({voice}))}>
                             {!this.state.recording ? 'Record' : 'Stop'}
                         </button>
@@ -158,23 +161,19 @@ class Chat extends React.Component {
     sendMessage = async message => {
         await this.connection.invoke("Echo", Object.assign({time: new Date()}, message, this.state));
     };
-    
-    formatAudioResponse = voice => {
-        if (voice) {
-            let blob = blobUtil.base64StringToBlob(voice);
-            const source = URL.createObjectURL(blob);
 
-            return (
-                <div>
-                    <hr />
-                    <audio id="audio" controls autoPlay={true}>
-                        <source id="source" src={source} type="audio/ogg"/>
-                    </audio>
-                </div>
-            )
-        } else {
-            return null;
-        }
+    formatAudioResponse = (voice, flag) => {
+        let blob = blobUtil.base64StringToBlob(voice);
+        const source = URL.createObjectURL(blob);
+
+        return (
+            <div>
+                <hr/>
+                <audio id="audio" controls autoPlay={!flag}>
+                    <source id="source" src={source} type="audio/ogg"/>
+                </audio>
+            </div>
+        );
     };
 
     render() {
@@ -194,7 +193,7 @@ class Chat extends React.Component {
                                              key={'header'}> {name} @ {this.formatTime(time)}</div>
                                         <div className="panel-body" key={'body'}>
                                             {text}
-                                            {this.formatAudioResponse(voice)}
+                                            {voice ? this.formatAudioResponse(voice, i) : null}
                                         </div>
                                     </div>
                                 </div>

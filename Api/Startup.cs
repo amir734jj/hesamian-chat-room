@@ -17,7 +17,11 @@ namespace Api
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSignalR();
+            services.AddSignalR(config =>
+            {
+                config.MaximumReceiveMessageSize = 5 * 1024 * 1024;    // 5 mega-bytes
+                config.StreamBufferCapacity = 50;
+            });
 
             services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             
