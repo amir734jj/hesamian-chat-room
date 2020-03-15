@@ -24,7 +24,8 @@ namespace Logic
             {
                 var (method, arg1, arg2) = message;
 
-                await Clients.All.SendAsync(method, arg1, arg2);
+                // Send to one client
+                await Clients.Client(Context.ConnectionId).SendAsync(method, arg1, arg2);
             });
             
             await Task.WhenAll(tasks);
