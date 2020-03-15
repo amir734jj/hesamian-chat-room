@@ -1,5 +1,5 @@
 class BasicComponent extends React.Component {
-    
+
     handleSubmit = submitHandler => event => {
         event.preventDefault();
 
@@ -16,7 +16,7 @@ class Info extends BasicComponent {
     }
 
     render() {
-        const { submitHandler } = this.props;
+        const {submitHandler} = this.props;
 
         return (
             <form onSubmit={this.handleSubmit(submitHandler)}>
@@ -26,7 +26,7 @@ class Info extends BasicComponent {
                         type="name"
                         className="form-control"
                         id="name"
-                        onChange={event => this.setState({ name: event.target.value })}
+                        onChange={event => this.setState({name: event.target.value})}
                     />
                 </div>
                 <div className="form-group">
@@ -40,26 +40,27 @@ class Info extends BasicComponent {
 }
 
 class Messenger extends BasicComponent {
-    
+
     constructor() {
         super();
-        this.state = { text: '' }
+        this.state = {text: ''}
     }
 
 
     render() {
-        const { submitHandler } = this.props;
+        const {submitHandler, itemClass} = this.props;
 
         return (
-            <form onSubmit={this.handleSubmit(submitHandler)}>
+            <form onSubmit={this.handleSubmit(submitHandler)} className={itemClass}>
                 <div className="form-group">
                     <label htmlFor="message">Write the message text:</label>
-                    <textarea className="form-control" id="message" placeholder="Enter message" required onChange={event => this.setState({ text: event.target.value })} />
+                    <textarea className="form-control" id="message" placeholder="Enter message" required
+                              onChange={event => this.setState({text: event.target.value})}/>
                 </div>
 
                 <div className="form-group">
-                    <button type="submit" className="btn btn-default">
-                        Send
+                    <button type="submit" className="btn btn-success">
+                        Echo
                     </button>
                 </div>
             </form>
@@ -70,7 +71,9 @@ class Messenger extends BasicComponent {
 class Chat extends React.Component {
     constructor() {
         super();
+        this.formatTime = time => new Date(time).toLocaleTimeString();
         this.state = {
+            messages: [],
             name: "",
             logs: [],
             initialized: false
@@ -83,15 +86,18 @@ class Chat extends React.Component {
             .build();
 
         this.connection.on("Log", (event, count) => {
-            this.setState(({ logs }) => logs.unshift(`Event: ${event}: #${count}`));
+            this.setState(({logs}) => logs.unshift(`Event: ${event}: #${count}`));
         });
 
         this.connection.on("Announce", (_, name) => {
-            this.setState(({ logs }) => logs.unshift(`Announced: ${name}`));
+            this.setState(({logs}) => logs.unshift(`Announced: ${name}`));
         });
 
-        this.connection.on("Inbox", ({text, name}) => {
-            this.setState(({ logs }) => logs.unshift(`From: ${name} - Received message ${text.trim()}`));
+        this.connection.on("Inbox", message => {
+            const {name, time} = message;
+
+            this.setState(({logs}) => logs.unshift(`Echo from ${name} @ ${this.formatTime(time)}`));
+            this.setState(({messages}) => messages.unshift(message));
         });
 
         this.connection.start();
@@ -101,33 +107,44 @@ class Chat extends React.Component {
         this.connection.stop();
     }
 
-    setInfoHandler = async ({ name }) => {
-        await this.setState({ initialized: true, name });
+    setInfoHandler = async ({name}) => {
+        await this.setState({initialized: true, name});
 
         await this.connection.invoke("Announce", this.state);
     };
-    
+
     sendMessage = async message => {
-        await this.connection.invoke("Echo", Object.assign({}, message, this.state));
+        await this.connection.invoke("Echo", Object.assign({time: new Date()}, message, this.state));
     };
 
     render() {
         return (
             <div>
                 {this.state.initialized ? (
-                    <div>
-                        <span className="label label-primary"> {this.state.name}</span>
+                    <div className={'row'}>
+                        <span className="label label-primary pull-right"> {this.state.name}</span>
+                        
+                        <Messenger itemClass={'col-md-12'} submitHandler={this.sendMessage}/>
+                        
+                        <div className={'col-md-12'}>
+                            {this.state.messages.map(({name, time, text}) => (
+                                <div className="panel-group">
+                                    <div className="panel panel-default">
+                                        <div className="panel-heading"> {name} @ {this.formatTime(time)}</div>
+                                        <div className="panel-body">{text}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
 
-                        <div className='clearfix' style={{ margin: '2rem'}}>
+                        <div className='clearfix col-md-12'>
                             <pre>
                                 {this.state.logs.join("\n")}
                             </pre>
                         </div>
-                        
-                        <Messenger submitHandler={this.sendMessage} />
                     </div>
                 ) : (
-                    <Info submitHandler={this.setInfoHandler} />
+                    <Info submitHandler={this.setInfoHandler}/>
                 )}
             </div>
         );
@@ -139,10 +156,10 @@ class App extends React.Component {
         return (
             <div>
                 <h3>Chat Room</h3>
-                <Chat />
+                <Chat/>
             </div>
         );
     }
 }
 
-ReactDOM.render(<App />, document.getElementById("app"));
+ReactDOM.render(<App/>, document.getElementById("app"));

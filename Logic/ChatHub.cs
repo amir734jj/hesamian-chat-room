@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
+using Cyotek.Collections.Generic;
 using Microsoft.AspNetCore.SignalR;
 using Models;
 using static Models.Constants.Actions;
@@ -9,31 +11,49 @@ namespace Logic
 {
     public class ChatHub : Hub
     {
-        // connected IDs
-        private static readonly HashSet<string> ConnectedIds = new HashSet<string>();
+        // Connected IDs
+        private static readonly HashSet<string> ConnectionIds = new HashSet<string>();
+        
+        private static readonly CircularBuffer<(string, object, object)> Buffer = new CircularBuffer<(string, object, object)>(10);
 
         public override async Task OnConnectedAsync()
         {
-            ConnectedIds.Add(Context.ConnectionId);
+            ConnectionIds.Add(Context.ConnectionId);
 
-            await Clients.All.SendAsync(LogAction, "joined", ConnectedIds.Count);
+            var tasks = Buffer.Select(async message =>
+            {
+                var (method, arg1, arg2) = message;
+
+                await Clients.All.SendAsync(method, arg1, arg2);
+            });
+            
+            await Task.WhenAll(tasks);
+            
+            await SendAll(LogAction, "joined", ConnectionIds.Count);
         }
 
         public override async Task OnDisconnectedAsync(Exception ex)
         {
-            ConnectedIds.Remove(Context.ConnectionId);
+            ConnectionIds.Remove(Context.ConnectionId);
             
-            await Clients.All.SendAsync(LogAction, "left", ConnectedIds.Count);
+            await SendAll(LogAction, "left", ConnectionIds.Count);
         }
 
         public async Task Echo(Payload message)
         {
-            await Clients.All.SendAsync("Inbox", message);
+            await SendAll("Inbox", message);
         }
         
         public async Task Announce(Profile profile)
         {
-            await Clients.All.SendAsync(AnnounceAction, "Profile", profile.Name);
+            await SendAll(AnnounceAction, "Profile", profile.Name);
+        }
+
+        private async Task SendAll(string method, object arg1, object arg2 = null)
+        {
+            Buffer.Put((method, arg1, arg2));
+            
+            await Clients.All.SendAsync(method, arg1, arg2);
         }
     }
 }
