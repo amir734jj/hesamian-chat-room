@@ -1,3 +1,16 @@
+function recordPolyfill(onGetUserMedia, onGetUserMediaError) {
+    navigator.getUserMedia = (navigator.getUserMedia ||
+        navigator.webkitGetUserMedia ||
+        navigator.mozGetUserMedia ||
+        navigator.msGetUserMedia);
+
+    if (navigator.mediaDevices) { // if navigator.mediaDevices exists, use it
+        navigator.mediaDevices.getUserMedia({audio: true}).then(onGetUserMedia, onGetUserMediaError);
+    } else {
+        navigator.getUserMedia({audio: true}, onGetUserMedia, onGetUserMediaError);
+    }
+}
+
 class BasicComponent extends React.Component {
 
     handleSubmit = submitHandler => event => {
@@ -54,31 +67,32 @@ class Messenger extends BasicComponent {
         };
     }
 
-    recordToggle = callback => async () => {
+    recordToggle = callback => () => {
         if (this.state.recording) {
             this.state.recorder.stop();
             this.state.stream.getAudioTracks()[0].stop();
             this.setState({stream: null, recorder: null, recording: false});
         } else {
-            let stream = await navigator.mediaDevices.getUserMedia({audio: true});
-            let recorder = new MediaRecorder(stream);
+            recordPolyfill(async stream => {
+                let recorder = new MediaRecorder(stream);
 
-            await this.setState({stream, recorder, recording: true});
+                await this.setState({stream, recorder, recording: true});
 
-            recorder.ondataavailable = async e => {
-                let blob = e.data;
-                await this.setState({recording: false});
+                recorder.ondataavailable = async e => {
+                    let blob = e.data;
+                    await this.setState({recording: false});
 
-                blobUtil.blobToBase64String(blob).then((base64String) => {
-                    // success
-                    callback(base64String);
-                }).catch((err) => {
-                    // error
-                    console.error(err);
-                });
-            };
+                    blobUtil.blobToBase64String(blob).then((base64String) => {
+                        // success
+                        callback(base64String);
+                    }).catch((err) => {
+                        // error
+                        console.error(err);
+                    });
+                };
 
-            recorder.start();
+                recorder.start();
+            }, err => console.error(err));
         }
     };
 
