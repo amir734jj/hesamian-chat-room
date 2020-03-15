@@ -183,7 +183,7 @@ class Chat extends React.Component {
 
                         <div className={'col-md-12'}>
                             {this.state.messages.map(({name, time, text, voice}, i) => (
-                                <div className="panel-group" key={uniqid(i)}>
+                                <div className="panel-group" key={this.state.messages.length - i - 1}>
                                     <div className="panel panel-default">
                                         <div className="panel-heading"> {name} @ {this.formatTime(time)}</div>
                                         <div className="panel-body">
